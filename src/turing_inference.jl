@@ -55,3 +55,15 @@ function turing_inference(
     end
     return setinfo(chn, (model = model,))
 end
+
+function get_nlogp(model, cb = θ -> false)
+    vi = Turing.VarInfo(model)
+    function nlogp(θ)
+        spl = Turing.SampleFromPrior()
+        vi′ = Turing.VarInfo(vi, spl, θ)
+        model(vi′, spl); cb(θ)
+        -Turing.getlogp(vi′)
+    end
+    ∇nlogp(θ) = -Turing.gradient_logp(θ, vi, model)[2]
+    return nlogp, ∇nlogp
+end
