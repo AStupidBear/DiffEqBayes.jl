@@ -11,7 +11,8 @@ function turing_inference(
     num_samples=1000, sampler = Turing.NUTS(0.65),
     syms = [Turing.@varname(theta[i]) for i in 1:length(priors)],
     sample_u0 = false, 
-    progress = false, 
+    progress = true,
+    solve_progress = false, 
     kwargs...,
 )
     N = length(priors)
@@ -28,7 +29,7 @@ function turing_inference(
         u0 = convert.(T, sample_u0 ? theta[1:nu] : prob.u0)
         p = convert.(T, sample_u0 ? theta[(nu + 1):end] : theta)
         _saveat = isnothing(t) ? Float64[] : t
-        sol = concrete_solve(prob, alg, u0, p; saveat = _saveat, progress = progress, kwargs...)
+        sol = concrete_solve(prob, alg, u0, p; saveat = _saveat, progress = solve_progress, kwargs...)
         failure = size(sol, 2) < length(_saveat)
 
         if failure
