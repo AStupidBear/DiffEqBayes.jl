@@ -22,6 +22,6 @@ function abc_inference(prob::DiffEqBase.DEProblem, alg, t, data, priors; ϵ=0.00
                             maxiterations = maxiterations
                             )
 
-    abcresult = runabc(abcsetup, data, progress = progress)
+    abcresult = runabc(abcsetup, view(data, :, 1:length(t)), progress = progress)
     return abcresult
 end
