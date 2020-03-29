@@ -13,6 +13,7 @@ function turing_inference(
     sample_u0 = false, 
     progress = true,
     solve_progress = false, 
+    cb = θ -> false,
     kwargs...,
 )
     N = length(priors)
@@ -31,9 +32,8 @@ function turing_inference(
         _saveat = isnothing(t) ? Float64[] : t
         sol = concrete_solve(prob, alg, u0, p; saveat = _saveat, progress = solve_progress, kwargs...)
         failure = size(sol, 2) < length(_saveat)
-
         if failure
-            @logpdf() = T(0) * sum(x) + T(-Inf)
+            @logpdf() = T(0) * sum(p) + T(-Inf)
             return
         end
         if ndims(sol) == 1
@@ -43,27 +43,27 @@ function turing_inference(
                 x[:, i] ~ likelihood(sol[:, i], theta, _saveat[i], σ)
             end
         end
+        cb(Tracker.data.([u0; p; σ]))
         return
     end
     
     # Instantiate a Model object.
     model = mf(data)
-    if num_samples > 1
+    if num_samples > 0
         chn = sample(model, sampler, num_samples; progress = progress)
     else
         chn = Chains(zeros(0, 0, 0))
     end
-    return setinfo(chn, (model = model,))
-end
-
-function get_nlogp(model, cb = θ -> false)
     vi = Turing.VarInfo(model)
+    backend = Turing.Core.getADbackend(sampler)
     function nlogp(θ)
         spl = Turing.SampleFromPrior()
         vi′ = Turing.VarInfo(vi, spl, θ)
         model(vi′, spl); cb(θ)
         -Turing.getlogp(vi′)
     end
-    ∇nlogp(θ) = -Turing.gradient_logp(θ, vi, model)[2]
-    return nlogp, ∇nlogp
+    function ∇nlogp(θ)
+        -Turing.gradient_logp(backend, θ, vi, model)[2]
+    end
+    return setinfo(chn, (model = model, nlogp = nlogp, ∇nlogp = ∇nlogp))
 end
