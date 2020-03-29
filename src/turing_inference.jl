@@ -55,7 +55,11 @@ function turing_inference(
         chn = Chains(zeros(0, 0, 0))
     end
     vi = Turing.VarInfo(model)
-    backend = Turing.Core.getADbackend(sampler)
+    backend = try
+        Turing.Core.getADbackend(sampler)
+    catch e
+        Turing.ADBackend(:forwarddiff)
+    end
     function nlogp(θ)
         spl = Turing.SampleFromPrior()
         vi′ = Turing.VarInfo(vi, spl, θ)
