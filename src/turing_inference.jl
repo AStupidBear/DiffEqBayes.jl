@@ -47,6 +47,10 @@ function turing_inference(
     
     # Instantiate a Model object.
     model = mf(data)
-    chn = sample(model, sampler, num_samples; progress = progress)
-    return chn
+    if num_samples > 1
+        chn = sample(model, sampler, num_samples; progress = progress)
+    else
+        chn = Chains(zeros(0, 0, 0))
+    end
+    return setinfo(chn, (model = model,))
 end
