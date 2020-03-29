@@ -39,12 +39,12 @@ function turing_inference(
             x ~ likelihood(sol[:], theta, Inf, σ)
         else
             for i = 1:length(t)
-                x[:, i] ~ likelihood(sol[:, i], theta, sol.t[i], σ)
+                x[:, i] ~ likelihood(sol[:, i], theta, _saveat[i], σ)
             end
         end
         return
     end
-
+    
     # Instantiate a Model object.
     model = mf(data)
     chn = sample(model, sampler, num_samples; progress = progress)
