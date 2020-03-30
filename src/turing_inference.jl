@@ -58,7 +58,7 @@ function turing_inference(
     backend = try
         Turing.Core.getADbackend(sampler)
     catch e
-        Turing.ADBackend(:forwarddiff)
+        Turing.ADBackend(:forwarddiff)()
     end
     function nlogp(θ)
         spl = Turing.SampleFromPrior()
